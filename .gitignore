@@ -1,16 +1,28 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python (legacy)
+__pycache__
+*.pyc
+*.pyo
 .Python
 env/
-.env
 venv/
-.venv/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store 
