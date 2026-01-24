@@ -1,222 +1,368 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useSnakeStore } from './stores/snake'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useGameStore } from '@/stores/game'
+import { useSettingsStore } from '@/stores/settings'
+import { useSnakeGame } from '@/composables/useSnakeGame'
+import { useKeyboardControls } from '@/composables/useKeyboardControls'
+import { useAudio } from '@/composables/useAudio'
 import { 
   Play, 
-  Trophy, 
   Settings, 
-  ChevronUp, 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight,
   Github,
-  Activity
+  Activity,
+  Moon,
+  Sun,
+  HelpCircle,
+  Heart,
+  Zap,
 } from 'lucide-vue-next'
+import SettingsPanel from '@/components/ui/SettingsPanel.vue'
 
-const store = useSnakeStore()
+const gameStore = useGameStore()
+const settingsStore = useSettingsStore()
+const snakeGame = useSnakeGame()
+const audio = useAudio()
+useKeyboardControls()
+
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let ctx: CanvasRenderingContext2D | null = null
 
-const snake = ref([{ x: 10, y: 10 }])
-const food = ref({ x: 15, y: 15 })
-const direction = ref({ x: 0, y: -1 })
-const nextDirection = ref({ x: 0, y: -1 })
-let gameInterval: any = null
+const isMobile = ref(false)
+const showSettings = ref(false)
+const showHelp = ref(false)
+
+const backgroundClass = computed(() => {
+  if (gameStore.isGameOver) return 'bg-red-950/20'
+  if (gameStore.isPaused) return 'bg-amber-950/20'
+  return 'bg-neon-bg'
+})
+
+const themeIcon = computed(() => {
+  const theme = settingsStore.settings.theme
+  if (theme === 'dark') return Moon
+  if (theme === 'light') return Sun
+  return Sun
+})
 
 onMounted(() => {
+  isMobile.value = window.innerWidth < 768
+  settingsStore.initializeTheme()
+  audio.initializeSounds()
+  
   if (canvasRef.value) {
     ctx = canvasRef.value.getContext('2d')
-    draw()
+    snakeGame.handleResize(canvasRef.value)
+    snakeGame.draw(ctx!, canvasRef.value)
   }
-  window.addEventListener('keydown', handleKey)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKey)
-  if (gameInterval) clearInterval(gameInterval)
-})
-
-function handleKey(e: KeyboardEvent) {
-  if (store.status !== 'playing') return
   
-  switch(e.key) {
-    case 'ArrowUp': if (direction.value.y === 0) nextDirection.value = { x: 0, y: -1 }; break
-    case 'ArrowDown': if (direction.value.y === 0) nextDirection.value = { x: 0, y: 1 }; break
-    case 'ArrowLeft': if (direction.value.x === 0) nextDirection.value = { x: -1, y: 0 }; break
-    case 'ArrowRight': if (direction.value.x === 0) nextDirection.value = { x: 1, y: 0 }; break
-  }
-}
-
-function startGame() {
-  store.setStatus('playing')
-  store.score = 0
-  snake.value = [{ x: 10, y: 10 }]
-  nextDirection.value = { x: 1, y: 0 }
-  spawnFood()
-  if (gameInterval) clearInterval(gameInterval)
-  gameInterval = setInterval(gameLoop, store.speed)
-}
-
-function gameLoop() {
-  direction.value = nextDirection.value
-  const head = { x: snake.value[0].x + direction.value.x, y: snake.value[0].y + direction.value.y }
-
-  // Collision checks
-  if (head.x < 0 || head.x >= store.gridSize || head.y < 0 || head.y >= store.gridSize || 
-      snake.value.some(s => s.x === head.x && s.y === head.y)) {
-    gameOver()
-    return
-  }
-
-  snake.value.unshift(head)
-
-  if (head.x === food.value.x && head.y === food.value.y) {
-    store.setScore(store.score + 10)
-    spawnFood()
-  } else {
-    snake.value.pop()
-  }
-  draw()
-}
-
-function spawnFood() {
-  food.value = {
-    x: Math.floor(Math.random() * store.gridSize),
-    y: Math.floor(Math.random() * store.gridSize)
-  }
-}
-
-function draw() {
-  if (!ctx || !canvasRef.value) return
-  const size = canvasRef.value.width / store.gridSize
-
-  ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height)
-
-  // Draw Snake
-  ctx.shadowBlur = 15
-  ctx.shadowColor = '#00f3ff'
-  ctx.fillStyle = '#00f3ff'
-  snake.value.forEach((s) => {
-    ctx!.fillRect(s.x * size + 1, s.y * size + 1, size - 2, size - 2)
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+    if (canvasRef.value) {
+      snakeGame.handleResize(canvasRef.value)
+      if (gameStore.isIdle || gameStore.isGameOver) {
+        snakeGame.draw(ctx!, canvasRef.value)
+      }
+    }
   })
+})
 
-  // Draw Food
-  ctx.shadowColor = '#ff00ff'
-  ctx.fillStyle = '#ff00ff'
-  ctx!.fillRect(food.value.x * size + 1, food.value.y * size + 1, size - 2, size - 2)
+watch(() => [gameStore.isPlaying, gameStore.gridSize], () => {
+  if (ctx && canvasRef.value && (gameStore.isIdle || gameStore.isGameOver)) {
+    snakeGame.draw(ctx, canvasRef.value)
+  }
+})
+
+watch(() => gameStore.isPlaying, (isPlaying) => {
+  if (!ctx || !canvasRef.value) return
+  
+  if (isPlaying) {
+    snakeGame.startGameLoop(ctx, canvasRef.value)
+  } else {
+    snakeGame.stopGameLoop()
+  }
+})
+
+function handleStart(): void {
+  gameStore.startGame()
 }
 
-function gameOver() {
-  clearInterval(gameInterval)
-  store.setStatus('gameover')
+function handlePause(): void {
+  gameStore.pauseGame()
+}
+
+function handleReset(): void {
+  if (ctx && canvasRef.value) {
+    snakeGame.resetGame(ctx, canvasRef.value)
+  }
+}
+
+function toggleTheme(): void {
+  const themes: Array<'dark' | 'light' | 'system'> = ['dark', 'light', 'system']
+  const currentIndex = themes.indexOf(settingsStore.settings.theme)
+  const nextIndex = (currentIndex + 1) % themes.length
+  settingsStore.setTheme(themes[nextIndex])
 }
 </script>
 
 <template>
-  <div class="h-screen w-screen flex items-center justify-center p-6 lg:p-12 crt bg-neon-bg">
-    
-    <div class="max-w-6xl w-full grid lg:grid-cols-12 gap-12 items-center relative z-10">
-       
-       <!-- Left Info Panel -->
-       <div class="lg:col-span-4 space-y-12">
-          <div class="space-y-4">
-             <div class="inline-flex items-center space-x-3 px-4 py-1.5 rounded-full bg-neon-cyan/10 border border-neon-cyan/20">
-                <span class="w-1.5 h-1.5 bg-neon-cyan rounded-full animate-pulse"></span>
-                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-neon-cyan">System Online</span>
-             </div>
-             <h1 class="text-6xl font-display font-black tracking-tighter uppercase leading-none neon-text-cyan italic">
-                Neon <br /> Snake.
-             </h1>
-             <p class="text-slate-500 font-medium text-lg leading-relaxed italic max-w-xs">A professional arcade reconstruction optimized for sub-second input response.</p>
+  <div 
+    class="h-screen w-screen flex items-center justify-center p-4 lg:p-8 transition-colors duration-500"
+    :class="backgroundClass"
+    role="application"
+    aria-label="Neon Snake Game"
+  >
+    <div class="max-w-6xl w-full grid lg:grid-cols-12 gap-6 lg:gap-12 items-center relative z-10">
+      
+      <!-- Left Info Panel -->
+      <div class="lg:col-span-4 space-y-6 lg:space-y-8">
+        <div class="space-y-3">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-neon-cyan/10 border border-neon-cyan/20">
+            <span class="w-2 h-2 bg-neon-cyan rounded-full animate-pulse"></span>
+            <span class="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.2em] text-neon-cyan">
+              System Online
+            </span>
+          </div>
+          <h1 class="text-4xl lg:text-6xl font-display font-black tracking-tighter uppercase leading-none neon-text-cyan italic">
+            Neon <br /> Snake.
+          </h1>
+          <p class="text-slate-500 text-sm lg:text-base font-medium leading-relaxed italic max-w-xs">
+            A professional arcade reconstruction optimized for sub-second input response.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 lg:gap-6 text-white">
+          <div class="glass-panel p-4 lg:p-6 space-y-1">
+            <p class="text-[8px] lg:text-[10px] font-black uppercase text-slate-500 tracking-widest">Score</p>
+            <p class="text-xl lg:text-2xl font-black neon-text-magenta">{{ gameStore.score }}</p>
+          </div>
+          <div class="glass-panel p-4 lg:p-6 space-y-1">
+            <p class="text-[8px] lg:text-[10px] font-black uppercase text-slate-500 tracking-widest">Best</p>
+            <p class="text-xl lg:text-2xl font-black text-white">{{ gameStore.highScore }}</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 lg:gap-4 text-xs">
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5">
+            <Heart :size="14" class="text-red-500" />
+            <span class="font-mono text-white">{{ gameStore.lives }}</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5">
+            <Zap :size="14" class="text-amber-500" />
+            <span class="font-mono text-white">Lv.{{ gameStore.level }}</span>
+          </div>
+          <div v-if="settingsStore.settings.showTimer" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5">
+            <Activity :size="14" class="text-neon-cyan" />
+            <span class="font-mono text-white">{{ gameStore.formattedTime }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Game Cabinet -->
+      <div class="lg:col-span-5 flex justify-center">
+        <div class="relative p-3 lg:p-4 glass-panel neon-border">
+          <canvas 
+            ref="canvasRef" 
+            width="400" 
+            height="400" 
+            class="rounded-xl bg-black/40"
+            role="img"
+            aria-label="Snake game canvas"
+          ></canvas>
+          
+          <!-- Start Overlay -->
+          <div 
+            v-if="gameStore.isIdle" 
+            class="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl"
+          >
+            <button 
+              @click="handleStart"
+              class="group flex flex-col items-center space-y-3 transition-all hover:scale-110 pointer-events-auto"
+              aria-label="Start game"
+            >
+              <div class="w-16 lg:w-20 h-16 lg:h-20 bg-neon-cyan rounded-full flex items-center justify-center text-black shadow-[0_0_30px_rgba(0,243,255,0.5)]">
+                <Play fill="currentColor" :size="28" class="ml-1 lg:ml-2" />
+              </div>
+              <span class="font-game text-[8px] lg:text-[10px] uppercase text-white tracking-widest">Start Game</span>
+            </button>
           </div>
 
-          <div class="grid grid-cols-2 gap-6 text-white">
-             <div class="glass-panel p-6 space-y-2">
-                <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Multiplier</p>
-                <p class="text-2xl font-black neon-text-magenta">{{ store.score }}</p>
-             </div>
-             <div class="glass-panel p-6 space-y-2">
-                <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">High Score</p>
-                <p class="text-2xl font-black text-white">{{ store.highScore }}</p>
-             </div>
+          <!-- Pause Overlay -->
+          <div 
+            v-if="gameStore.isPaused" 
+            class="absolute inset-0 flex items-center justify-center bg-amber-950/60 backdrop-blur-md rounded-2xl"
+          >
+            <div class="text-center space-y-6 p-8 pointer-events-auto">
+              <h2 class="text-3xl font-display font-black text-amber-500 uppercase italic">Paused</h2>
+              <button 
+                @click="handlePause"
+                class="px-8 py-3 bg-white text-black rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neon-cyan transition-all"
+              >
+                Resume
+              </button>
+            </div>
           </div>
-       </div>
 
-       <!-- Center Game Cabinet -->
-       <div class="lg:col-span-5 flex justify-center">
-          <div class="relative p-4 glass-panel neon-border">
-             <canvas ref="canvasRef" width="400" height="400" class="bg-black/40 rounded-xl"></canvas>
-             
-             <!-- Overlays -->
-             <div v-if="store.status === 'idle'" class="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl">
-                <button @click="startGame" class="group flex flex-col items-center space-y-4 transition-all hover:scale-110 pointer-events-auto">
-                   <div class="w-20 h-20 bg-neon-cyan rounded-full flex items-center justify-center text-black shadow-[0_0_30px_rgba(0,243,255,0.5)]">
-                      <Play fill="currentColor" :size="32" class="ml-1" />
-                   </div>
-                   <span class="font-game text-[10px] uppercase text-white tracking-widest">Initiate Grid</span>
+          <!-- Game Over Overlay -->
+          <div 
+            v-if="gameStore.isGameOver" 
+            class="absolute inset-0 flex items-center justify-center bg-red-950/60 backdrop-blur-md rounded-2xl"
+          >
+            <div class="text-center space-y-4 lg:space-y-6 p-6 lg:p-10 pointer-events-auto">
+              <div class="space-y-2">
+                <h2 class="text-3xl lg:text-4xl font-display font-black text-red-500 uppercase italic">Terminated</h2>
+                <p class="text-[10px] lg:text-xs font-black uppercase text-white tracking-widest">
+                  Final Score: {{ gameStore.score }}
+                </p>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-3 lg:gap-4">
+                <div class="glass-panel p-3 lg:p-4">
+                  <p class="text-[8px] uppercase tracking-widest text-slate-500">Best</p>
+                  <p class="text-lg lg:text-xl font-game text-white">{{ gameStore.highScore }}</p>
+                </div>
+                <div class="glass-panel p-3 lg:p-4">
+                  <p class="text-[8px] uppercase tracking-widest text-slate-500">Level</p>
+                  <p class="text-lg lg:text-xl font-game text-neon-cyan">{{ gameStore.level }}</p>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <button 
+                  @click="handleStart"
+                  class="w-full bg-white text-black py-3 lg:py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neon-cyan transition-all"
+                >
+                  Play Again
                 </button>
-             </div>
-
-             <div v-if="store.status === 'gameover'" class="absolute inset-0 flex items-center justify-center bg-red-950/60 backdrop-blur-md rounded-2xl">
-                <div class="text-center space-y-8 p-10 pointer-events-auto">
-                   <div class="space-y-2">
-                      <h2 class="text-4xl font-display font-black text-red-500 uppercase italic">Terminated</h2>
-                      <p class="text-[10px] font-black uppercase text-white tracking-widest">Collision at {{ store.score }}</p>
-                   </div>
-                   <button @click="startGame" class="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-neon-cyan transition-all active:scale-95">
-                      Retry Sequence
-                   </button>
-                </div>
-             </div>
+                <button 
+                  @click="handleReset"
+                  class="w-full bg-transparent border border-white/20 text-white py-3 lg:py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-white/5 transition-all"
+                >
+                  Main Menu
+                </button>
+              </div>
+            </div>
           </div>
-       </div>
+        </div>
+      </div>
 
-       <!-- Right Controller / Settings -->
-       <aside class="lg:col-span-3 space-y-12">
-          <div class="glass-panel p-8 space-y-8">
-             <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 flex items-center"><Settings class="mr-2" :size="14" /> Modulators</h3>
-             <div class="space-y-6">
-                <div class="space-y-3">
-                   <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter flex justify-between">
-                      <span>Reflex Delta</span>
-                      <span class="text-neon-cyan">{{ store.speed }}ms</span>
-                   </p>
-                   <input type="range" min="50" max="200" v-model="store.speed" class="w-full h-1 bg-white/10 rounded-full appearance-none accent-neon-cyan cursor-pointer">
-                </div>
-                <div class="space-y-3">
-                   <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Grid Size</p>
-                   <div class="grid grid-cols-3 gap-2">
-                      <button v-for="s in [15, 20, 25]" :key="s" 
-                              @click="store.gridSize = s"
-                              class="py-2 rounded-lg text-[10px] font-black border border-white/10 transition-all"
-                              :class="store.gridSize === s ? 'bg-white text-black' : 'text-slate-500 hover:bg-white/5'">
-                         {{ s }}
-                      </button>
-                   </div>
-                </div>
-             </div>
+      <!-- Right Controls Panel -->
+      <aside class="lg:col-span-3 space-y-4 lg:space-y-6">
+        <div class="glass-panel p-4 lg:p-6 space-y-4 lg:space-y-6">
+          <h3 class="text-[10px] lg:text-[12px] font-black uppercase tracking-[0.2em] lg:tracking-[0.3em] text-slate-500 flex items-center">
+            <Settings class="mr-2" :size="14" /> Settings
+          </h3>
+          
+          <div class="grid grid-cols-3 gap-2">
+            <button 
+              v-for="size in [15, 20, 25]" 
+              :key="size"
+              @click="gameStore.setGridSize(size)"
+              class="py-2 rounded-lg text-xs font-black border transition-all"
+              :class="gameStore.gridSize === size 
+                ? 'bg-neon-cyan text-black border-neon-cyan' 
+                : 'text-slate-500 border-white/10 hover:bg-white/5'"
+            >
+              {{ size }}x{{ size }}
+            </button>
           </div>
 
-          <div class="flex justify-between items-center text-[8px] font-black uppercase tracking-[0.5em] text-slate-700 italic px-4">
-             <div class="flex items-center space-x-3">
-                <Github :size="12" />
-                <span class="hover:text-white cursor-pointer">Source</span>
-             </div>
-             <span>SQ-SNK-2026</span>
+          <div class="space-y-2">
+            <p class="text-[10px] lg:text-[12px] font-bold text-slate-400 uppercase tracking-tighter flex justify-between">
+              <span>Speed</span>
+              <span class="text-neon-cyan">{{ gameStore.speed }}ms</span>
+            </p>
+            <input 
+              type="range" 
+              min="40" 
+              max="200" 
+              :value="gameStore.speed"
+              @input="gameStore.setSpeed(Number(($event.target as HTMLInputElement).value))"
+              class="w-full h-1 bg-white/10 rounded-full appearance-none accent-neon-cyan cursor-pointer"
+            />
           </div>
-       </aside>
+
+          <div class="flex flex-wrap gap-2">
+            <button 
+              @click="toggleTheme"
+              class="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              :aria-label="`Toggle theme. Current: ${settingsStore.settings.theme}`"
+            >
+              <component :is="themeIcon" :size="16" class="text-white" />
+            </button>
+            
+            <button 
+              @click="showSettings = true"
+              class="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              aria-label="Open settings"
+            >
+              <Settings :size="16" class="text-white" />
+            </button>
+            
+            <button 
+              @click="showHelp = true"
+              class="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              aria-label="Open help"
+            >
+              <HelpCircle :size="16" class="text-white" />
+            </button>
+          </div>
+        </div>
+
+        <div class="hidden lg:flex justify-between items-center text-[8px] font-black uppercase tracking-[0.4em] text-slate-700 italic px-2">
+          <a 
+            href="https://github.com/mk-knight23/32-Snake-Game-Python-Web" 
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center space-x-2 hover:text-white transition-colors"
+          >
+            <Github :size="12" />
+            <span>Source</span>
+          </a>
+          <span>SNK-VUE-2026</span>
+        </div>
+      </aside>
 
     </div>
+
+    <SettingsPanel v-model:show="showSettings" v-model:showHelp="showHelp" />
   </div>
 </template>
 
-<style>
+<style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 .font-game {
   font-family: 'Press Start 2P', cursive;
 }
+
 canvas {
   image-rendering: pixelated;
+}
+
+.neon-border {
+  @apply border-2 border-neon-cyan shadow-[0_0_15px_rgba(0,243,255,0.5)];
+}
+
+.neon-text-cyan {
+  @apply text-neon-cyan drop-shadow-[0_0_8px_rgba(0,243,255,0.8)];
+}
+
+.neon-text-magenta {
+  @apply text-neon-magenta drop-shadow-[0_0_8px_rgba(255,0,255,0.8)];
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply appearance-none w-4 h-4 rounded-full bg-neon-cyan cursor-pointer;
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply w-4 h-4 rounded-full bg-neon-cyan cursor-pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+
+.glass-panel {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl;
 }
 </style>

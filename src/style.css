@@ -2,43 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  background-color: #050510;
-  color: #ffffff;
+@layer base {
+  :root {
+    --color-bg-primary: #050510;
+    --color-bg-secondary: #0a0a1a;
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #94a3b8;
+    --color-accent-cyan: #00f3ff;
+    --color-accent-magenta: #ff00ff;
+  }
+
+  .light {
+    --color-bg-primary: #f8fafc;
+    --color-bg-secondary: #e2e8f0;
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #64748b;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-neon-dark text-neon-light transition-colors duration-300;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .light body {
+    @apply bg-neon-light text-slate-900;
+  }
 }
 
-body {
-  @apply antialiased overflow-hidden select-none bg-neon-bg;
-  margin: 0;
-  height: 100vh;
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl;
+  }
+
+  .light .glass-panel {
+    @apply bg-slate-900/5 border-slate-200/50;
+  }
 }
 
-.neon-border {
-  @apply border-2 border-neon-cyan shadow-[0_0_15px_rgba(0,243,255,0.5)];
+@layer utilities {
+  .text-glow-cyan {
+    text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+  }
+
+  .text-glow-magenta {
+    text-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+  }
 }
 
-.neon-text-cyan {
-  @apply text-neon-cyan drop-shadow-[0_0_8px_rgba(0,243,255,0.8)];
+.font-game {
+  font-family: 'Press Start 2P', cursive;
 }
 
-.neon-text-magenta {
-  @apply text-neon-magenta drop-shadow-[0_0_8px_rgba(255,0,255,0.8)];
+canvas {
+  image-rendering: pixelated;
 }
 
-.glass-panel {
-  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl;
-}
-
-.crt::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  z-index: 2;
-  background-size: 100% 2px, 3px 100%;
-  pointer-events: none;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
