@@ -16,6 +16,10 @@ export const useGameStore = defineStore('game', () => {
   const lives = ref(GAME_CONSTANTS.INITIAL_LIVES)
   const level = ref(1)
   const foodEaten = ref(0)
+  
+  // V2: Golden apple power-up
+  const goldenApple = ref<{ x: number; y: number; active: boolean; timeLeft: number } | null>(null)
+  const goldenAppleTimer = ref<number | null>(null)
 
   const progress = computed(() => (foodEaten.value / (gridSize.value * gridSize.value)) * 100)
   const isPlaying = computed(() => status.value === 'playing')
@@ -94,11 +98,48 @@ export const useGameStore = defineStore('game', () => {
       }
       
       spawnFood()
+      
+      // V2: Chance to spawn golden apple
+      maybeSpawnGoldenApple()
     } else {
-      snake.value.pop()
+      // V2: Check golden apple collision
+      if (goldenApple.value?.active && head.x === goldenApple.value.x && head.y === goldenApple.value.y) {
+        score.value += GAME_CONSTANTS.SCORE_PER_FOOD * 3 // 3x points
+        goldenApple.value = null
+        if (goldenAppleTimer.value) {
+          clearTimeout(goldenAppleTimer.value)
+          goldenAppleTimer.value = null
+        }
+      } else {
+        snake.value.pop()
+      }
     }
 
     return { collided: false, ateFood }
+  }
+  
+  // V2: Spawn golden apple with 15% chance
+  function maybeSpawnGoldenApple(): void {
+    if (goldenApple.value?.active) return // Don't spawn if one exists
+    if (Math.random() < 0.15) {
+      let newApple: { x: number; y: number }
+      do {
+        newApple = {
+          x: Math.floor(Math.random() * gridSize.value),
+          y: Math.floor(Math.random() * gridSize.value)
+        }
+      } while (
+        snake.value.some(s => s.x === newApple.x && s.y === newApple.y) ||
+        (food.value.x === newApple.x && food.value.y === newApple.y)
+      )
+      
+      goldenApple.value = { ...newApple, active: true, timeLeft: 5000 }
+      
+      // Golden apple disappears after 5 seconds
+      goldenAppleTimer.value = window.setTimeout(() => {
+        goldenApple.value = null
+      }, 5000)
+    }
   }
 
   function spawnFood(): void {
@@ -146,6 +187,7 @@ export const useGameStore = defineStore('game', () => {
     gridSize,
     snake,
     food,
+    goldenApple,
     direction,
     nextDirection,
     lives,

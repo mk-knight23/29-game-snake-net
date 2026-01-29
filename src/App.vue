@@ -30,6 +30,9 @@ let ctx: CanvasRenderingContext2D | null = null
 const isMobile = ref(false)
 const showSettings = ref(false)
 const showHelp = ref(false)
+const touchStartX = ref(0)
+const touchStartY = ref(0)
+const shakeIntensity = ref(0)
 
 const backgroundClass = computed(() => {
   if (gameStore.isGameOver) return 'bg-red-950/20'
@@ -43,6 +46,13 @@ const themeIcon = computed(() => {
   if (theme === 'light') return Sun
   return Sun
 })
+
+const speedPresets = [
+  { name: 'Slow', value: 150 },
+  { name: 'Normal', value: 100 },
+  { name: 'Fast', value: 60 },
+  { name: 'Insane', value: 40 },
+]
 
 onMounted(() => {
   isMobile.value = window.innerWidth < 768
@@ -74,11 +84,34 @@ watch(() => [gameStore.isPlaying, gameStore.gridSize], () => {
 
 watch(() => gameStore.isPlaying, (isPlaying) => {
   if (!ctx || !canvasRef.value) return
-  
+
   if (isPlaying) {
     snakeGame.startGameLoop(ctx, canvasRef.value)
   } else {
     snakeGame.stopGameLoop()
+  }
+})
+
+watch(() => gameStore.isGameOver, (isGameOver) => {
+  if (isGameOver) {
+    // Trigger screen shake
+    shakeIntensity.value = 10
+    const shake = setInterval(() => {
+      shakeIntensity.value *= 0.9
+      if (shakeIntensity.value < 0.5) {
+        clearInterval(shake)
+        shakeIntensity.value = 0
+      }
+    }, 50)
+  }
+})
+
+const shakeStyle = computed(() => {
+  if (shakeIntensity.value <= 0) return {}
+  const x = (Math.random() - 0.5) * shakeIntensity.value * 2
+  const y = (Math.random() - 0.5) * shakeIntensity.value * 2
+  return {
+    transform: `translate(${x}px, ${y}px)`,
   }
 })
 
@@ -102,6 +135,43 @@ function toggleTheme(): void {
   const nextIndex = (currentIndex + 1) % themes.length
   settingsStore.setTheme(themes[nextIndex])
 }
+
+function handleTouchStart(event: TouchEvent): void {
+  touchStartX.value = event.touches[0].clientX
+  touchStartY.value = event.touches[0].clientY
+}
+
+function handleTouchEnd(event: TouchEvent): void {
+  if (!gameStore.isPlaying) return
+
+  const touchEndX = event.changedTouches[0].clientX
+  const touchEndY = event.changedTouches[0].clientY
+
+  const deltaX = touchEndX - touchStartX.value
+  const deltaY = touchEndY - touchStartY.value
+
+  const minSwipeDistance = 30
+
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    // Horizontal swipe
+    if (Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX > 0) {
+        gameStore.setNextDirection({ x: 1, y: 0 })
+      } else {
+        gameStore.setNextDirection({ x: -1, y: 0 })
+      }
+    }
+  } else {
+    // Vertical swipe
+    if (Math.abs(deltaY) > minSwipeDistance) {
+      if (deltaY > 0) {
+        gameStore.setNextDirection({ x: 0, y: 1 })
+      } else {
+        gameStore.setNextDirection({ x: 0, y: -1 })
+      }
+    }
+  }
+}
 </script>
 
 <template>
@@ -114,7 +184,7 @@ function toggleTheme(): void {
     <div class="max-w-6xl w-full grid lg:grid-cols-12 gap-6 lg:gap-12 items-center relative z-10">
       
       <!-- Left Info Panel -->
-      <div class="lg:col-span-4 space-y-6 lg:space-y-8">
+      <div class="lg:col-span-4 space-y-7 lg:space-y-9">
         <div class="space-y-3">
           <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-neon-cyan/10 border border-neon-cyan/20">
             <span class="w-2 h-2 bg-neon-cyan rounded-full animate-pulse"></span>
@@ -159,14 +229,16 @@ function toggleTheme(): void {
 
       <!-- Center Game Cabinet -->
       <div class="lg:col-span-5 flex justify-center">
-        <div class="relative p-3 lg:p-4 glass-panel neon-border">
-          <canvas 
-            ref="canvasRef" 
-            width="400" 
-            height="400" 
+        <div class="relative p-3 lg:p-4 glass-panel neon-border transition-transform" :style="shakeStyle">
+          <canvas
+            ref="canvasRef"
+            width="400"
+            height="400"
             class="rounded-xl bg-black/40"
             role="img"
             aria-label="Snake game canvas"
+            @touchstart="handleTouchStart"
+            @touchend="handleTouchEnd"
           ></canvas>
           
           <!-- Start Overlay -->
@@ -182,7 +254,7 @@ function toggleTheme(): void {
               <div class="w-16 lg:w-20 h-16 lg:h-20 bg-neon-cyan rounded-full flex items-center justify-center text-black shadow-[0_0_30px_rgba(0,243,255,0.5)]">
                 <Play fill="currentColor" :size="28" class="ml-1 lg:ml-2" />
               </div>
-              <span class="font-game text-[8px] lg:text-[10px] uppercase text-white tracking-widest">Start Game</span>
+              <span class="font-game text-[8px] lg:text-[10px] uppercase text-white tracking-widest">Initialize</span>
             </button>
           </div>
 
@@ -227,17 +299,17 @@ function toggleTheme(): void {
               </div>
 
               <div class="flex flex-col gap-2">
-                <button 
+                <button
                   @click="handleStart"
                   class="w-full bg-white text-black py-3 lg:py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neon-cyan transition-all"
                 >
-                  Play Again
+                  Once More
                 </button>
-                <button 
+                <button
                   @click="handleReset"
                   class="w-full bg-transparent border border-white/20 text-white py-3 lg:py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-white/5 transition-all"
                 >
-                  Main Menu
+                  Back to Hub
                 </button>
               </div>
             </div>
@@ -266,19 +338,34 @@ function toggleTheme(): void {
             </button>
           </div>
 
-          <div class="space-y-2">
-            <p class="text-[10px] lg:text-[12px] font-bold text-slate-400 uppercase tracking-tighter flex justify-between">
-              <span>Speed</span>
-              <span class="text-neon-cyan">{{ gameStore.speed }}ms</span>
-            </p>
-            <input 
-              type="range" 
-              min="40" 
-              max="200" 
-              :value="gameStore.speed"
-              @input="gameStore.setSpeed(Number(($event.target as HTMLInputElement).value))"
-              class="w-full h-1 bg-white/10 rounded-full appearance-none accent-neon-cyan cursor-pointer"
-            />
+          <div class="space-y-3">
+            <div class="grid grid-cols-4 gap-2">
+              <button
+                v-for="preset in speedPresets"
+                :key="preset.name"
+                @click="gameStore.setSpeed(preset.value)"
+                class="py-2 rounded-lg text-[10px] font-black border transition-all"
+                :class="gameStore.speed === preset.value
+                  ? 'bg-neon-cyan text-black border-neon-cyan'
+                  : 'text-slate-500 border-white/10 hover:bg-white/5'"
+              >
+                {{ preset.name }}
+              </button>
+            </div>
+            <div class="space-y-2">
+              <p class="text-[10px] lg:text-[12px] font-bold text-slate-400 uppercase tracking-tighter flex justify-between">
+                <span>Custom</span>
+                <span class="text-neon-cyan">{{ gameStore.speed }}ms</span>
+              </p>
+              <input
+                type="range"
+                min="40"
+                max="200"
+                :value="gameStore.speed"
+                @input="gameStore.setSpeed(Number(($event.target as HTMLInputElement).value))"
+                class="w-full h-1 bg-white/10 rounded-full appearance-none accent-neon-cyan cursor-pointer"
+              />
+            </div>
           </div>
 
           <div class="flex flex-wrap gap-2">
@@ -309,16 +396,16 @@ function toggleTheme(): void {
         </div>
 
         <div class="hidden lg:flex justify-between items-center text-[8px] font-black uppercase tracking-[0.4em] text-slate-700 italic px-2">
-          <a 
-            href="https://github.com/mk-knight23/32-Snake-Game-Python-Web" 
+          <span>© 2026 Made by MK — Built by Musharraf Kazi</span>
+          <a
+            href="https://github.com/mk-knight23/32-Snake-Game-Python-Web"
             target="_blank"
             rel="noopener noreferrer"
             class="flex items-center space-x-2 hover:text-white transition-colors"
           >
             <Github :size="12" />
-            <span>Source</span>
+            <span>GitHub</span>
           </a>
-          <span>SNK-VUE-2026</span>
         </div>
       </aside>
 
@@ -329,6 +416,7 @@ function toggleTheme(): void {
 </template>
 
 <style scoped>
+@reference "./style.css";
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 .font-game {

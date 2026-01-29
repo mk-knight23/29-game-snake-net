@@ -1,72 +1,83 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --color-bg-primary: #050510;
-    --color-bg-secondary: #0a0a1a;
-    --color-text-primary: #f8fafc;
-    --color-text-secondary: #94a3b8;
-    --color-accent-cyan: #00f3ff;
-    --color-accent-magenta: #ff00ff;
-  }
+@theme {
+  --color-neon-cyan: #00f3ff;
+  --color-neon-magenta: #ff00ff;
+  --color-neon-lime: #39ff14;
+  --color-neon-bg: #050510;
+  --color-neon-dark: #0a0a0f;
+  --color-neon-light: #f8fafc;
 
-  .light {
-    --color-bg-primary: #f8fafc;
-    --color-bg-secondary: #e2e8f0;
-    --color-text-primary: #0f172a;
-    --color-text-secondary: #64748b;
-  }
+  --font-game: "Press Start 2P", system-ui;
+  --font-display: system-ui, sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
-  html {
-    @apply scroll-smooth;
-  }
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
-  body {
-    @apply bg-neon-dark text-neon-light transition-colors duration-300;
-    font-family: 'Inter', system-ui, sans-serif;
-  }
+  --shadow-neon-cyan: 0 0 15px rgba(0, 243, 255, 0.5);
+  --shadow-neon-magenta: 0 0 15px rgba(255, 0, 255, 0.5);
+}
 
-  .light body {
-    @apply bg-neon-light text-slate-900;
+:root {
+  --color-bg-primary: #0a0a0f;
+  --color-bg-secondary: #050510;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-accent: #00f3ff;
+}
+
+.light {
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #e2e8f0;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #64748b;
+  --color-accent: #00f3ff;
+}
+
+html {
+  @apply scroll-smooth;
+}
+
+body {
+  @apply bg-neon-dark text-neon-light antialiased;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+@utility glass-panel {
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@utility btn-neon {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition-property: all;
+  transition-duration: 200ms;
+
+  &:hover {
+    transform: scale(1.05);
   }
 }
 
-@layer components {
-  .glass-panel {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl;
-  }
+@utility btn-neon-primary {
+  @apply bg-neon-cyan text-neon-dark shadow-neon-cyan;
 
-  .light .glass-panel {
-    @apply bg-slate-900/5 border-slate-200/50;
+  &:hover {
+    background-color: #00d8e4;
   }
 }
 
-@layer utilities {
-  .text-glow-cyan {
-    text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
-  }
+@utility btn-neon-secondary {
+  @apply bg-neon-magenta text-white shadow-neon-magenta;
 
-  .text-glow-magenta {
-    text-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
-  }
-}
-
-.font-game {
-  font-family: 'Press Start 2P', cursive;
-}
-
-canvas {
-  image-rendering: pixelated;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  &:hover {
+    background-color: #e400e4;
   }
 }

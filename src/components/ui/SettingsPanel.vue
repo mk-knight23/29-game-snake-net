@@ -325,6 +325,7 @@ const winRate = computed(() => statsStore.getWinRate().toFixed(1))
 </template>
 
 <style scoped>
+@reference "../../style.css";
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.3s ease;

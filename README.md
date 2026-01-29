@@ -34,9 +34,18 @@ This project is a professional arcade reconstruction of the classic Snake game u
 | **Settings** | Inline only | Full settings panel |
 | **Persistence** | High score only | Settings + Stats |
 | **Audio** | None | Sound effects |
-| **Game Modes** | 1 | 3 difficulty levels |
+| **Game Modes** | 1 | 3 difficulty levels + Speed presets |
 | **Statistics** | None | Comprehensive stats |
+| **Mobile** | None | Swipe controls |
+| **Visual FX** | None | Particles + Screen shake |
 | **Linting** | None | ESLint + Prettier |
+
+### New Features
+
+- **Swipe Controls**: Swipe on mobile to control snake direction
+- **Speed Presets**: Quick-select speed (Slow, Normal, Fast, Insane) or use custom slider
+- **Particle Effects**: Visual feedback when eating food
+- **Screen Shake**: Impact effect on game over
 
 ## 🛠️ Tech Stack
 
@@ -246,3 +255,16 @@ If you have any questions or need help, please:
 <p align="center">
   Made with ❤️ by <a href="https://github.com/mk-knight23">mk-knight23</a>
 </p>
+
+---
+
+## 📝 Design Notes (V2)
+
+### Intentional Quirk: The Golden Apple
+V2 adds a golden apple that spawns rarely (10% chance) and gives 3x points. It flashes and disappears after 5 seconds if not eaten. This creates urgency—do you abandon your safe route for a risky detour? The timing (5 seconds) is arbitrary but feels right. Too long, and it's free points. Too short, and it's impossible.
+
+### Tradeoff: Fixed Speed Increases
+Speed increases every 5 food items, regardless of mode. I didn't implement "smart" difficulty that adapts to your skill. The tradeoff: predictable progression vs. dynamic challenge. Predictable lets players strategize around known milestones. Dynamic difficulty can feel patronizing—"the game is going easy on me."
+
+### What I Chose NOT to Build
+No multiplayer or leaderboards. Your high score is yours alone. Online leaderboards turn every game into a competition. Solo high-score chasing is meditative—you're only competing against your own patience and focus. Not everything needs to be social.
