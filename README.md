@@ -275,3 +275,20 @@ Speed increases every 5 food items, regardless of mode. I didn't implement "smar
 
 ### What I Chose NOT to Build
 No multiplayer or leaderboards. Your high score is yours alone. Online leaderboards turn every game into a competition. Solo high-score chasing is meditative—you're only competing against your own patience and focus. Not everything needs to be social.
+
+## 🎉 Additional Features (V3)
+
+Two quality-of-life improvements for better gameplay flow:
+
+### Pause Screen (ESC Key)
+**Why added**: Previously, pressing ESC just returned you to the main menu with no options. If you wanted to quickly take a break, you'd lose your progress.
+
+**What changed**: ESC now opens a pause overlay with three options: Resume (continue playing), Restart (start over), and Quit (return to menu). The game state is preserved while paused.
+
+### High Score Celebration
+**Why added**: Breaking your personal best felt underwhelming—it just showed a number. No fanfare, no acknowledgment.
+
+**What changed**: When you beat your high score, the game now displays a "NEW BEST!" celebration with animated text before returning to the main menu. Small dopamine hit, big satisfaction.
+
+### Intentionally Rejected: Mobile Pause Button
+I considered adding a visible pause button on mobile screens. Rejected because the screen real estate is precious, and swipe-to-pause (from edges) is more elegant. Physical buttons (ESC on desktop, swipe gesture on mobile) keep the UI clean.
