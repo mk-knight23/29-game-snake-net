@@ -136,7 +136,7 @@ const winRate = computed(() => statsStore.getWinRate().toFixed(1))
                       @click="settingsStore.setDifficulty(diff as 'easy' | 'normal' | 'hard')"
                       class="flex-1 py-2 px-4 rounded-lg text-sm font-medium uppercase tracking-wide transition-all"
                       :class="settingsStore.settings.difficulty === diff 
-                        ? 'bg-neon-magenta text-white' 
+                        ? 'bg-snake-rose text-white shadow-neon-rose' 
                         : 'bg-white/5 text-slate-400 hover:bg-white/10'"
                     >
                       {{ diff }}
@@ -191,7 +191,7 @@ const winRate = computed(() => statsStore.getWinRate().toFixed(1))
               
               <div class="grid grid-cols-2 gap-4">
                 <div class="glass-panel p-4 text-center">
-                  <BarChart3 :size="20" class="text-neon-cyan mx-auto mb-2" />
+                  <BarChart3 :size="20" class="text-snake-violet mx-auto mb-2" />
                   <p class="text-2xl font-game text-white">{{ statsStore.stats.totalGames }}</p>
                   <p class="text-[10px] uppercase tracking-widest text-slate-500">Games</p>
                 </div>
@@ -203,12 +203,12 @@ const winRate = computed(() => statsStore.getWinRate().toFixed(1))
                 </div>
                 
                 <div class="glass-panel p-4 text-center">
-                  <p class="text-2xl font-game text-neon-magenta">{{ statsStore.stats.bestScore }}</p>
+                  <p class="text-2xl font-game text-snake-rose">{{ statsStore.stats.bestScore }}</p>
                   <p class="text-[10px] uppercase tracking-widest text-slate-500">Best Score</p>
                 </div>
                 
                 <div class="glass-panel p-4 text-center">
-                  <p class="text-2xl font-game text-neon-lime">{{ statsStore.stats.longestSnake }}</p>
+                  <p class="text-2xl font-game text-snake-lavender">{{ statsStore.stats.longestSnake }}</p>
                   <p class="text-[10px] uppercase tracking-widest text-slate-500">Longest Snake</p>
                 </div>
               </div>
@@ -252,8 +252,8 @@ const winRate = computed(() => statsStore.getWinRate().toFixed(1))
           <div class="p-6 space-y-6">
             <div class="space-y-4">
               <div class="flex gap-4">
-                <div class="w-10 h-10 rounded-full bg-neon-cyan/20 flex items-center justify-center flex-shrink-0">
-                  <span class="text-neon-cyan font-game text-xs">↑↓←→</span>
+                <div class="w-10 h-10 rounded-full bg-snake-violet/20 flex items-center justify-center flex-shrink-0">
+                  <span class="text-snake-violet font-game text-xs">↑↓←→</span>
                 </div>
                 <div>
                   <h4 class="text-white font-bold mb-1">Controls</h4>
@@ -262,8 +262,8 @@ const winRate = computed(() => statsStore.getWinRate().toFixed(1))
               </div>
 
               <div class="flex gap-4">
-                <div class="w-10 h-10 rounded-full bg-neon-magenta/20 flex items-center justify-center flex-shrink-0">
-                  <span class="text-neon-magenta font-game text-xs">+</span>
+                <div class="w-10 h-10 rounded-full bg-snake-rose/20 flex items-center justify-center flex-shrink-0">
+                  <span class="text-snake-rose font-game text-xs">+</span>
                 </div>
                 <div>
                   <h4 class="text-white font-bold mb-1">Eat Food</h4>
@@ -351,7 +351,7 @@ const winRate = computed(() => statsStore.getWinRate().toFixed(1))
 }
 
 .toggle-squid-checked {
-  @apply bg-neon-magenta;
+  @apply bg-snake-rose shadow-neon-rose;
 }
 
 .toggle-squid-thumb {

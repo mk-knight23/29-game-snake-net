@@ -16,10 +16,14 @@ export const useGameStore = defineStore('game', () => {
   const lives = ref(GAME_CONSTANTS.INITIAL_LIVES)
   const level = ref(1)
   const foodEaten = ref(0)
-  
+
   // V2: Golden apple power-up
   const goldenApple = ref<{ x: number; y: number; active: boolean; timeLeft: number } | null>(null)
   const goldenAppleTimer = ref<number | null>(null)
+
+  const previousRuns = ref<Array<{ score: number; timestamp: number }>>(
+    JSON.parse(localStorage.getItem(STORAGE_KEYS.STATS) || '[]')
+  )
 
   const progress = computed(() => (foodEaten.value / (gridSize.value * gridSize.value)) * 100)
   const isPlaying = computed(() => status.value === 'playing')
@@ -52,6 +56,15 @@ export const useGameStore = defineStore('game', () => {
 
   function gameOver(): void {
     status.value = 'gameover'
+
+    // Save to history
+    previousRuns.value.unshift({
+      score: score.value,
+      timestamp: Date.now()
+    })
+    previousRuns.value = previousRuns.value.slice(0, 5) // Keep last 5
+    localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(previousRuns.value))
+
     if (score.value > highScore.value) {
       highScore.value = score.value
       localStorage.setItem(STORAGE_KEYS.HIGH_SCORE, score.value.toString())
@@ -91,14 +104,14 @@ export const useGameStore = defineStore('game', () => {
     if (ateFood) {
       score.value += GAME_CONSTANTS.SCORE_PER_FOOD * level.value
       foodEaten.value++
-      
+
       if (foodEaten.value % GAME_CONSTANTS.FOOD_PER_LEVEL === 0) {
         level.value++
         speed.value = Math.max(GAME_CONSTANTS.MIN_SPEED, speed.value - GAME_CONSTANTS.SPEED_INCREMENT)
       }
-      
+
       spawnFood()
-      
+
       // V2: Chance to spawn golden apple
       maybeSpawnGoldenApple()
     } else {
@@ -117,7 +130,7 @@ export const useGameStore = defineStore('game', () => {
 
     return { collided: false, ateFood }
   }
-  
+
   // V2: Spawn golden apple with 15% chance
   function maybeSpawnGoldenApple(): void {
     if (goldenApple.value?.active) return // Don't spawn if one exists
@@ -132,9 +145,9 @@ export const useGameStore = defineStore('game', () => {
         snake.value.some(s => s.x === newApple.x && s.y === newApple.y) ||
         (food.value.x === newApple.x && food.value.y === newApple.y)
       )
-      
+
       goldenApple.value = { ...newApple, active: true, timeLeft: 5000 }
-      
+
       // Golden apple disappears after 5 seconds
       goldenAppleTimer.value = window.setTimeout(() => {
         goldenApple.value = null
@@ -208,5 +221,6 @@ export const useGameStore = defineStore('game', () => {
     setNextDirection,
     setSpeed,
     setGridSize,
+    previousRuns,
   }
 })

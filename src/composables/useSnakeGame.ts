@@ -108,9 +108,9 @@ export function useSnakeGame() {
       const isHead = index === 0
       const brightness = 1 - (index / gameStore.snake.length) * 0.5
 
-      ctx.fillStyle = `rgba(0, 243, 255, ${brightness})`
-      ctx.shadowColor = '#00f3ff'
-      ctx.shadowBlur = isHead ? 15 : 5
+      ctx.fillStyle = `rgba(124, 58, 237, ${brightness})`
+      ctx.shadowColor = '#7C3AED'
+      ctx.shadowBlur = isHead ? 20 : 10
 
       const x = segment.x * cellSize + 1
       const y = segment.y * cellSize + 1
@@ -141,8 +141,8 @@ export function useSnakeGame() {
     const y = food.y * cellSize + cellSize / 2
     const radius = cellSize / 2 - 2
 
-    ctx.fillStyle = '#ff00ff'
-    ctx.shadowColor = '#ff00ff'
+    ctx.fillStyle = '#F43F5E'
+    ctx.shadowColor = '#F43F5E'
     ctx.shadowBlur = 20
 
     ctx.beginPath()
@@ -151,33 +151,33 @@ export function useSnakeGame() {
 
     ctx.shadowBlur = 0
   }
-  
+
   // V2: Draw golden apple with pulsing effect
   function drawGoldenApple(ctx: CanvasRenderingContext2D, cellSize: number): void {
     const apple = gameStore.goldenApple
     if (!apple?.active) return
-    
+
     const x = apple.x * cellSize + cellSize / 2
     const y = apple.y * cellSize + cellSize / 2
     const baseRadius = cellSize / 2 - 2
     // Pulsing effect
     const pulse = 1 + Math.sin(Date.now() / 100) * 0.1
     const radius = baseRadius * pulse
-    
-    ctx.fillStyle = '#fbbf24'
-    ctx.shadowColor = '#fbbf24'
+
+    ctx.fillStyle = '#A78BFA'
+    ctx.shadowColor = '#A78BFA'
     ctx.shadowBlur = 25
-    
+
     ctx.beginPath()
     ctx.arc(x, y, radius, 0, Math.PI * 2)
     ctx.fill()
-    
+
     // Inner highlight
-    ctx.fillStyle = '#f59e0b'
+    ctx.fillStyle = '#7C3AED'
     ctx.beginPath()
     ctx.arc(x - 2, y - 2, radius * 0.5, 0, Math.PI * 2)
     ctx.fill()
-    
+
     ctx.shadowBlur = 0
   }
 
@@ -206,9 +206,9 @@ export function useSnakeGame() {
           const food = gameStore.food
           const x = food.x * cellSize + cellSize / 2
           const y = food.y * cellSize + cellSize / 2
-          spawnParticles(x, y, '#ff00ff')
+          spawnParticles(x, y, '#F43F5E')
         }
-        
+
         // V2: Check if golden apple was eaten (score increased by 3x amount)
         if (gameStore.goldenApple?.active) {
           const head = gameStore.snake[0]
@@ -217,7 +217,7 @@ export function useSnakeGame() {
             const cellSize = canvas.width / gameStore.gridSize
             const x = gameStore.goldenApple.x * cellSize + cellSize / 2
             const y = gameStore.goldenApple.y * cellSize + cellSize / 2
-            spawnParticles(x, y, '#fbbf24')
+            spawnParticles(x, y, '#A78BFA')
           }
         }
 

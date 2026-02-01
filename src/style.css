@@ -1,38 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  --color-neon-cyan: #00f3ff;
-  --color-neon-magenta: #ff00ff;
-  --color-neon-lime: #39ff14;
-  --color-neon-bg: #050510;
-  --color-neon-dark: #0a0a0f;
-  --color-neon-light: #f8fafc;
+  --color-snake-violet: #7C3AED;
+  --color-snake-lavender: #A78BFA;
+  --color-snake-rose: #F43F5E;
+  --color-snake-void: #0F0F23;
+  --color-snake-white: #E2E8F0;
 
   --font-game: "Press Start 2P", system-ui;
-  --font-display: system-ui, sans-serif;
+  --font-display: "VT323", monospace;
   --font-sans: "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-mono: "VT323", monospace;
 
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-scanline: scanline 8s linear infinite;
 
-  --shadow-neon-cyan: 0 0 15px rgba(0, 243, 255, 0.5);
-  --shadow-neon-magenta: 0 0 15px rgba(255, 0, 255, 0.5);
+  --shadow-neon-violet: 0 0 15px rgba(124, 58, 237, 0.5);
+  --shadow-neon-rose: 0 0 15px rgba(244, 63, 94, 0.5);
 }
 
 :root {
-  --color-bg-primary: #0a0a0f;
-  --color-bg-secondary: #050510;
-  --color-text-primary: #f8fafc;
+  --color-bg-primary: #0F0F23;
+  --color-bg-secondary: #0a0a1f;
+  --color-text-primary: #E2E8F0;
   --color-text-secondary: #94a3b8;
-  --color-accent: #00f3ff;
-}
-
-.light {
-  --color-bg-primary: #f8fafc;
-  --color-bg-secondary: #e2e8f0;
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #64748b;
-  --color-accent: #00f3ff;
+  --color-accent: #7C3AED;
 }
 
 html {
@@ -40,44 +32,107 @@ html {
 }
 
 body {
-  @apply bg-neon-dark text-neon-light antialiased;
-  font-family: 'Inter', system-ui, sans-serif;
+  @apply bg-snake-void text-snake-white antialiased overflow-hidden;
+  font-family: 'VT323', monospace;
 }
 
 @utility glass-panel {
-  background-color: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  background-color: rgba(15, 15, 35, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 0px;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
 }
 
-@utility btn-neon {
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 700;
+@utility crt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%,
+      rgba(0, 0, 0, 0.1) 50%),
+    linear-gradient(90deg,
+      rgba(255, 0, 0, 0.03),
+      rgba(0, 255, 0, 0.01),
+      rgba(0, 0, 255, 0.03));
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
+  z-index: 100;
+}
+
+@utility btn-snake {
+  padding: 1rem 2rem;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  transition-property: all;
-  transition-duration: 200ms;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 0px;
 
   &:hover {
     transform: scale(1.05);
   }
 }
 
-@utility btn-neon-primary {
-  @apply bg-neon-cyan text-neon-dark shadow-neon-cyan;
+@utility btn-snake-primary {
+  @apply bg-snake-rose text-white shadow-neon-rose border border-snake-rose/50;
 
   &:hover {
-    background-color: #00d8e4;
+    @apply bg-white text-snake-rose border-white;
+    transform: translateY(-2px);
   }
 }
 
-@utility btn-neon-secondary {
-  @apply bg-neon-magenta text-white shadow-neon-magenta;
+@utility btn-snake-secondary {
+  @apply bg-snake-violet text-white shadow-neon-violet border border-snake-violet/50;
 
   &:hover {
-    background-color: #e400e4;
+    @apply bg-white text-snake-violet border-white;
+    transform: translateY(-2px);
   }
+}
+
+@keyframes glitch {
+  0% {
+    transform: translate(0)
+  }
+
+  20% {
+    transform: translate(-2px, 2px)
+  }
+
+  40% {
+    transform: translate(-2px, -2px)
+  }
+
+  60% {
+    transform: translate(2px, 2px)
+  }
+
+  80% {
+    transform: translate(2px, -2px)
+  }
+
+  100% {
+    transform: translate(0)
+  }
+}
+
+.animate-glitch {
+  animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%)
+  }
+
+  100% {
+    transform: translateY(100%)
+  }
+}
+
+.text-glow {
+  text-shadow: 0 0 10px currentColor;
 }

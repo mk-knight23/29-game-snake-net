@@ -1,8 +1,12 @@
 {
-  "name": "neon-snake-vue",
+  "name": "29-game-snake-net",
   "private": true,
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mk-knight23/29-game-snake-net.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
